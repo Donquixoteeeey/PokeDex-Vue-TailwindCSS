@@ -16,6 +16,7 @@
 
    <body class="bg-yellow-300 flex h-screen">
 
+    
         <div id="app" class="container mx-auto mt-2 ml-10 p-10 ">
             <div class="flex flex-col items-center sm:flex-row sm:justify-between">
                 <div>
@@ -25,8 +26,8 @@
                 <div class="flex items-center order-2 sm:order-none sm:ml-2"> 
                     <input v-model="searchMethod" 
                     @input="searchPokemon"
-                    class="w-80 p-2 rounded-lg focus:outline-none"
-                    placeholder="Search a Pokemon">
+                    class="w-80 p-2 rounded-lg focus:outline-none font-mono"
+                    placeholder="Search a Pokémon">
         
                     <button class="ml-2 bg-blue-900 text-white hover:text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-400">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
@@ -35,19 +36,23 @@
                     </button>
                 </div>
             </div>
-        
+
+            <div v-if="!pokemonData" class="flex justify-center items-center mt-40 text-black font-semibold font-mono">
+                <p>Loading Pokémon Data...</p>
+            </div>
+
     <div class="fixed bottom-0 left-0 right-0 bg-custom-color py-4">
         <div class="mt-5 flex justify-center space-x-4">
             
         <button
           @click="previousPokemon"
-          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32">
+          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
           Previous
         </button>
 
         <button
           @click="nextPokemon"
-          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32">
+          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
           Next
         </button>
 
