@@ -17,12 +17,12 @@
    <body class="bg-yellow-300 flex h-screen">
 
         <div id="app" class="container mx-auto mt-2 ml-10 p-10 ">
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-center sm:flex-row sm:justify-between">
                 <div>
                     <img src="https://archives.bulbagarden.net/media/upload/4/4b/Pok%C3%A9dex_logo.png" alt="Pokemon Logo" class="w-90 h-50 mr-2">
                 </div>
 
-                <div class="flex items-center"> 
+                <div class="flex items-center order-2 sm:order-none sm:ml-2"> 
                     <input v-model="searchMethod" 
                     @input="searchPokemon"
                     class="w-80 p-2 rounded-lg focus:outline-none"
