@@ -1,169 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE-edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>
-            PokeDex
-        </title>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokeDex</title>
 
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
 
-    </head>
+<body class="bg-yellow-300 flex h-screen">
 
-   <body class="bg-yellow-300 flex h-screen">
-
-    
-        <div id="app" class="container mx-auto mt-2 ml-10 p-10 ">
-            <div class="flex flex-col items-center sm:flex-row sm:justify-between">
-                <div>
-                    <img src="https://archives.bulbagarden.net/media/upload/4/4b/Pok%C3%A9dex_logo.png" alt="Pokemon Logo" class="w-90 h-50 mr-2">
-                </div>
-
-                <div class="flex items-center order-2 sm:order-none sm:ml-2"> 
-                    <input v-model="searchMethod" 
-                    @input="searchPokemon"
-                    class="w-80 p-2 rounded-lg focus:outline-none font-mono"
-                    placeholder="Search a Pokémon">
-        
-                    <button class="ml-2 bg-blue-900 text-white hover:text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                        </svg>              
-                    </button>
-                </div>
+    <div id="app" class="container mx-auto mt-2 ml-10 p-10 ">
+        <div class="flex flex-col items-center sm:flex-row sm:justify-between">
+            <div>
+                <img src="https://archives.bulbagarden.net/media/upload/4/4b/Pok%C3%A9dex_logo.png" alt="Pokemon Logo"
+                    class="w-90 h-50 mr-2">
             </div>
 
-            <div v-if="!pokemonData" class="flex justify-center items-center mt-40 text-black font-semibold font-mono">
-                <p>Loading Pokémon Data...</p>
+            <div class="flex items-center order-2 sm:order-none sm:ml-2">
+                <div class="relative">
+                    <input v-model="searchMethod"
+                        @input="filterPokemon"
+                        @focus="showSuggestions = true"
+                        @blur="hideSuggestions"
+                        class="w-80 p-2 rounded-lg focus:outline-none font-mono"
+                        placeholder="Search a Pokémon">
+
+                    <div v-if="showSuggestions && filteredPokemon.length" class="absolute bg-white border border-gray-300 w-full mt-1 rounded-lg shadow-lg z-10">
+                        <ul>
+                            <li v-for="pokemon in filteredPokemon" 
+                                :key="pokemon.name"
+                                @mousedown.prevent="selectPokemon(pokemon.name)"
+                                class="p-2 cursor-pointer hover:bg-gray-200">
+                                {{ pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1) }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <button @click="searchPokemon" class="ml-2 bg-blue-900 text-white hover:text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                        stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div v-if="!pokemonData && !errorMessage" class="flex justify-center items-center mt-40 text-black font-semibold font-mono">
+            <p>Loading Pokémon Data...</p>
+        </div>
+
+        <div v-if="errorMessage" class="flex justify-center items-center mt-40 text-black font-semibold font-mono">
+            <p>{{ errorMessage }}</p>
+        </div>
+
+        <div class="fixed bottom-0 left-0 right-0 bg-custom-color py-4">
+            <div class="mt-5 flex justify-center space-x-4">
+                <button @click="previousPokemon"
+                    class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
+                    Previous
+                </button>
+
+                <button @click="nextPokemon"
+                    class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
+                    Next
+                </button>
+
+                <button @click="restartSearch"
+                    class="bg-red-600 hover:bg-red-800 text-white font-medium py-2 px-4 rounded w-32 font-mono">
+                    Restart
+                </button>
+            </div>
+        </div>
+
+        <div v-if="pokemonData && !errorMessage" class="border-2 border-gray-600 p-4 rounded-lg mt-20 ml-20 mb-2 flex">
+            <div class="w-1/3 mt-5">
+                <img :src="pokemonData.sprites.front_default" class="h-60 mx-auto" alt="Pokemon">
             </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-custom-color py-4">
-        <div class="mt-5 flex justify-center space-x-4">
-            
-        <button
-          @click="previousPokemon"
-          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
-          Previous
-        </button>
+            <div class="w-2/3 pl-20 ml-10">
+                <h2 class="mb-4 mt-3 text-4xl font-semibold font-mono text-blue-600">{{ pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1) }}</h2>
 
-        <button
-          @click="nextPokemon"
-          class="bg-black hover:bg-blue-900 text-white font-medium py-2 px-4 rounded w-32 font-mono">
-          Next
-        </button>
+                <!-- Abilities -->
+                <h3 class="mt-4 font-medium text-red-600">Abilities:</h3>
+                <ul>
+                    <li v-for="ability in pokemonData.abilities" :key="ability.ability.name">{{ ability.ability.name.charAt(0).toUpperCase() + ability.ability.name.slice(1) }}</li>
+                </ul>
 
+                <!-- Types -->
+                <h3 class="mt-4 font-medium text-purple-600">Types:</h3>
+                <ul>
+                    <li v-for="type in pokemonData.types" :key="type.type.name">{{ type.type.name.charAt(0).toUpperCase() + type.type.name.slice(1) }}</li>
+                </ul>
+
+                <br>
+
+                <!-- Habitat -->
+                <h3 class="font-medium text-green-600">Habitat:</h3>
+                <p>{{ pokemonHabitat.name.charAt(0).toUpperCase() + pokemonHabitat.name.slice(1) }}</p>
+            </div>
         </div>
-    </div>
-    
-    <div v-if="pokemonData" class="border-2 border-gray-600 p-4 rounded-lg mt-20 ml-20 mb-2 flex">
-        <div class="w-1/3 mt-5">
-            <img :src="pokemonData.sprites.front_default" class="h-60 mx-auto" alt="Pokemon">
-        </div>
-    
-        <div class="w-2/3 pl-20 ml-10">
-            <h2 class="mb-4 mt-3 text-4xl font-semibold font-mono text-blue-600">{{ pokemonData.name.charAt(0).toUpperCase() + pokemonData.name.slice(1) }}</h2>
-    
-            <!-- Abilities -->
-            <h3 class="mt-4 font-medium text-red-600">Abilities:</h3>
-            <ul>
-                <li v-for="ability in pokemonData.abilities" :key="ability.ability.name">{{ ability.ability.name.charAt(0).toUpperCase() + ability.ability.name.slice(1) }}</li>
-            </ul>
-    
-            
-            <!-- Types -->
-            <h3 class="mt-4 font-medium text-purple-600">Types:</h3>
-            <ul>
-                <li v-for="type in pokemonData.types" :key="type.type.name">{{ type.type.name.charAt(0).toUpperCase() + type.type.name.slice(1) }}</li>
-            </ul>
 
-            <br>
-    
-            <!-- Habitat -->
-            <h3 class="font-medium text-green-600">Habitat:</h3>
-            <p>{{ pokemonHabitat.name.charAt(0).toUpperCase() + pokemonHabitat.name.slice(1) }}</p>
-        </div>
-    </div>
+        <script>
+            const app = Vue.createApp({
+                data() {
+                    return {
+                        searchMethod: '',
+                        pokemonData: null,
+                        pokemonHabitat: null,
+                        allPokemon: [],
+                        filteredPokemon: [],
+                        showSuggestions: false,
+                        errorMessage: ''
+                    }
+                },
+                async mounted() {
+                    await this.fetchAllPokemon();
+                },
+                methods: {
+                    async fetchAllPokemon() {
+                        try {
+                            const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1000');
+                            const data = await response.json();
+                            this.allPokemon = data.results;
+                        } catch (error) {
+                            console.error('Error fetching all Pokemon data:', error);
+                        }
+                    },
+                    filterPokemon() {
+                        const searchTerm = this.searchMethod.toLowerCase();
+                        this.filteredPokemon = this.allPokemon.filter(pokemon => pokemon.name.includes(searchTerm));
+                    },
+                    selectPokemon(name) {
+                        this.searchMethod = name;
+                        this.showSuggestions = false;
+                        this.searchPokemon();
+                    },
+                    hideSuggestions() {
+                        setTimeout(() => {
+                            this.showSuggestions = false;
+                        }, 200);
+                    },
+                    async searchPokemon() {
+                        try {
+                            this.errorMessage = '';
+                            const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.searchMethod.toLowerCase()}`);
+                            if (!response.ok) {
+                                throw new Error('Pokémon not found');
+                            }
+                            const data = await response.json();
+                            this.pokemonData = data;
 
-    
-    <script>
-        const app = Vue.createApp({
-            data() {
-                return {
-                    searchMethod: '',
-                    pokemonData: null,
-                    pokemonHabitat: null
+                            const speciesUrl = data.species.url;
+                            const speciesResponse = await fetch(speciesUrl);
+                            const speciesData = await speciesResponse.json();
+                            const habitatUrl = speciesData.habitat.url;
+
+                            const habitatResponse = await fetch(habitatUrl);
+                            const habitatData = await habitatResponse.json();
+                            this.pokemonHabitat = habitatData;
+                        } catch (error) {
+                            this.errorMessage = 'Pokémon not found. Please check the spelling.';
+                            this.pokemonData = null;
+                            this.pokemonHabitat = null;
+                        }
+                    },
+                    async nextPokemon() {
+                        if (this.pokemonData && this.pokemonData.id < 898) {
+                            const nextId = this.pokemonData.id + 1;
+                            this.searchMethod = nextId.toString();
+                            await this.searchPokemon();
+                        }
+                    },
+                    async previousPokemon() {
+                        if (this.pokemonData && this.pokemonData.id > 1) {
+                            const prevId = this.pokemonData.id - 1;
+                            this.searchMethod = prevId.toString();
+                            await this.searchPokemon();
+                        }
+                    },
+                    restartSearch() {
+                        this.searchMethod = '';
+                        this.pokemonData = null;
+                        this.pokemonHabitat = null;
+                        this.errorMessage = '';
+                        this.filteredPokemon = [];
+                    }
                 }
-            },
-            methods: {
-                async searchPokemon() {
-                    try {
-                        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${this.searchMethod.toLowerCase()}`);
-                        const data = await response.json();
-                        this.pokemonData = data;
+            });
 
-                        const speciesUrl = data.species.url;
-                        const speciesResponse = await fetch(speciesUrl);
-                        const speciesData = await speciesResponse.json();
-                        const habitatUrl = speciesData.habitat.url;
+            app.mount('#app');
+        </script>
 
-                        const habitatResponse = await fetch(habitatUrl);
-                        const habitatData = await habitatResponse.json();
-                        this.pokemonHabitat = habitatData;
-                    } catch (error) {
-                        console.error('Error fetching Pokemon data:', error);
-                    }
-                },
-                async nextPokemon() {
-                    if (this.pokemonData && this.pokemonData.id < 898) {
-                        const nextId = this.pokemonData.id + 1;
-                        this.searchMethod = nextId.toString();
-                        await this.searchPokemon(); 
-                    }
-                },
-                
-                async previousPokemon() {
-                    if (this.pokemonData && this.pokemonData.id > 1) {
-                        const prevId = this.pokemonData.id - 1;
-                        this.searchMethod = prevId.toString(); 
-                        await this.searchPokemon();
-                    }
-                },
-                async fetchPokemonData(id) {
-                    try {
-                        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-                        const data = await response.json();
-                        this.pokemonData = data;
-
-                        const speciesUrl = data.species.url;
-                        const speciesResponse = await fetch(speciesUrl);
-                        const speciesData = await speciesResponse.json();
-                        const habitatUrl = speciesData.habitat.url;
-
-                        const habitatResponse = await fetch(habitatUrl);
-                        const habitatData = await habitatResponse.json();
-                        this.pokemonHabitat = habitatData;
-                    } catch (error) {
-                        console.error('Error fetching Pokemon data:', error);
-                    }
-                }
+        <style>
+            .bg-custom-color {
+                background-color: #FF0000;
             }
-        });
+        </style>
 
-        app.mount('#app');
-    </script>
-
-
-    <style>
-        .bg-custom-color {
-            background-color: #FF0000;
-        }
-    </style> 
-       
     </div>
-    
-   </body>
+
+</body>
+
 </html>
